@@ -5,11 +5,12 @@ services:
   sheep-server:
     container_name: sheep_sheep-server_1
     build:
-      context: .
-      dockerfile: backend/Dockerfile
-    command: applications/run-sheep-server
+      context: backend
+      dockerfile: Dockerfile
+    command: /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config_test_clion
     ports:
      - "34568:34568"
+     - "2222:22"
     networks:
      - sheep_nw
 

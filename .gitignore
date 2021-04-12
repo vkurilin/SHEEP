@@ -117,3 +117,6 @@ venv.bak/
 
 # sqlite file
 sheep.db
+
+cmake-build-debug*
+.idea/

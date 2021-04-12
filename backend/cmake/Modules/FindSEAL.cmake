@@ -1,5 +1,5 @@
-find_path(SEAL_INCLUDE_DIR NAMES seal)
-find_library(SEAL_LIBRARY NAMES libseal.a)
+find_path(SEAL_INCLUDE_DIR NAMES seal HINTS ENV SEAL_INCLUDE_DIR)
+find_library(SEAL_LIBRARY NAMES libseal.a libseal-3.6.a)
 
 #set(SEAL_FOUND TRUE)
 set(SEAL_INCLUDE_DIRS ${SEAL_INCLUDE_DIR})
