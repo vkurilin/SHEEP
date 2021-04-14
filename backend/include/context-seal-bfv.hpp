@@ -4,6 +4,7 @@
 #include <seal/seal.h>
 #include <cmath>
 #include <complex>
+#include <memory>
 #include <sstream>
 #include <type_traits>
 #include "bits.hpp"
@@ -47,7 +48,7 @@ class ContextSealBFV : public Context<PlaintextT, seal::Ciphertext> {
     std::stringstream x;
     x << "1x^" << m_N << " + 1";
     this->m_poly_modulus = x.str();
-    seal::EncryptionParameters parms(seal::scheme_type::BFV);
+    seal::EncryptionParameters parms(seal::scheme_type::bfv);
     parms.set_poly_modulus_degree(m_N);
     seal::sec_level_type sec_level;
     if (m_security == 128) {
@@ -63,22 +64,23 @@ class ContextSealBFV : public Context<PlaintextT, seal::Ciphertext> {
     parms.set_coeff_modulus(seal::CoeffModulus::BFVDefault(m_N, sec_level));
 
     parms.set_plain_modulus(m_plaintext_modulus);
-    m_context = seal::SEALContext::Create(parms);
-    m_encoder = new seal::BatchEncoder(m_context);
+    m_context = std::make_shared<seal::SEALContext>(parms);
+    m_encoder = new seal::BatchEncoder(*m_context);
 
-    seal::KeyGenerator keygen(m_context);
-    m_public_key = keygen.public_key();
+    seal::KeyGenerator keygen(*m_context);
+
     m_secret_key = keygen.secret_key();
-    m_galois_keys = keygen.galois_keys();
-    m_relin_keys = keygen.relin_keys();
+    keygen.create_public_key(m_public_key);
+    keygen.create_galois_keys(m_galois_keys);
+    keygen.create_relin_keys(m_relin_keys);
 
     //// sizes of objects, in bytes
     this->m_public_key_size = sizeof(m_public_key);
     this->m_private_key_size = sizeof(m_secret_key);
 
-    m_encryptor = new seal::Encryptor(m_context, m_public_key);
-    m_evaluator = new seal::Evaluator(m_context);
-    m_decryptor = new seal::Decryptor(m_context, m_secret_key);
+    m_encryptor = new seal::Encryptor(*m_context, m_public_key);
+    m_evaluator = new seal::Evaluator(*m_context);
+    m_decryptor = new seal::Decryptor(*m_context, m_secret_key);
 
     this->m_nslots = m_encoder->slot_count() / 2;
   }

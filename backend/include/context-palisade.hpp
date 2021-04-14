@@ -7,8 +7,8 @@
 #include <type_traits>
 
 #define RLWE RLWE_Palisade
-#include <palisade.h>
-#include <cryptocontexthelper.h>
+#include <palisade/pke/palisade.h>
+#include <palisade/pke/cryptocontexthelper.h>
 #undef RLWE
 
 #include "bits.hpp"

@@ -19,14 +19,11 @@ ADD tests SHEEP/backend/tests
 RUN rm -fr SHEEP/backend/build; mkdir SHEEP/backend/build
 
 RUN cd SHEEP/backend/build; export CC=gcc-9; export CXX=g++-9; \
-    HElib_ROOT=/SHEEP/backend/lib/HElib/src; \
-    SEAL_INCLUDE_DIR=/usr/local/include/SEAL-3.6/seal; \
-    PALISADE_INCLUDE_DIR=/PALISADE/src/pke/lib/; \
-    PALISADE_LIB_DIR=/PALISADE/bin/lib/; \
-    PALISADE_THIRD_PARTY_LIB_DIR=/PALISADE/third-party/lib/ \
-    SEAL_INCLUDE_DIR=/usr/local/include/SEAL-3.6/seal; cmake ../
+    export HElib_ROOT=/SHEEP/backend/lib/HElib/src; \
+    export SEAL_INCLUDE_DIR=/usr/local/include/SEAL-3.6/; \
+    cmake ..
 
-RUN cd SHEEP/backend/build; make VERBOSE=1 run-sheep-server
+#RUN cd SHEEP/backend/build; make VERBOSE=1 run-sheep-server
 
 WORKDIR SHEEP/backend/build
 EXPOSE 34568

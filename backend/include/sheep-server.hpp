@@ -158,10 +158,10 @@ class SheepServer {
   std::string convert_to_string(PlaintextT t);
 
   template <typename PlaintextT>
-  void configure_and_run(http_request message);
+  void configure_and_run(const http_request& message);
 
   template <typename PlaintextT>
-  int configure_and_serialize(std::vector<int> pt);
+  int configure_and_serialize(const std::vector<int>& pt);
 
   void get_parameters();
 
@@ -175,33 +175,33 @@ class SheepServer {
 
  private:
   /// generic methods - will then dispatch to specific ones based on URL
-  void handle_get(http_request message);
-  void handle_put(http_request message);
-  void handle_post(http_request message);
+  void handle_get(const http_request& message);
+  void handle_put(const http_request& message);
+  void handle_post(const http_request& message);
   /// actual endpoints
-  void handle_get_context(http_request message);
-  void handle_get_circuit(http_request message);
-  void handle_get_input_type(http_request message);
-  void handle_get_inputs(http_request message);
-  void handle_get_const_inputs(http_request message);
+  void handle_get_context(const http_request& message);
+  void handle_get_circuit(const http_request& message);
+  void handle_get_input_type(const http_request& message);
+  void handle_get_inputs(const http_request& message);
+  void handle_get_const_inputs(const http_request& message);
   void handle_get_parameters(http_request message);
   void handle_get_slots(http_request message);
-  void handle_get_eval_strategy(http_request message);
-  void handle_get_config(http_request message);
+  void handle_get_eval_strategy(const http_request& message);
+  void handle_get_config(const http_request& message);
   void handle_get_results(http_request message);
   void handle_get_job(http_request message);
 
-  void handle_post_inputs(http_request message);
-  void handle_post_const_inputs(http_request message);
-  void handle_post_serialized_ciphertext(http_request message);
+  void handle_post_inputs(const http_request& message);
+  void handle_post_const_inputs(const http_request& message);
+  void handle_post_serialized_ciphertext(const http_request& message);
 
   void handle_post_input_type(http_request message);
-  void handle_post_circuit(http_request message);
-  void handle_post_circuitfile(http_request message);
-  void handle_post_context(http_request message);
+  void handle_post_circuit(const http_request& message);
+  void handle_post_circuitfile(const http_request& message);
+  void handle_post_context(const http_request& message);
   void handle_post_job(http_request message);
   void handle_post_configure(http_request message);
-  void handle_post_run(http_request message);
+  void handle_post_run(const http_request& message);
 
   void handle_put_parameters(http_request message);
   void handle_put_eval_strategy(http_request message);

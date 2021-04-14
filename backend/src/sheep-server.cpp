@@ -288,7 +288,7 @@ bool SheepServer::check_job_outputs(
 }
 
 template <typename PlaintextT>
-int SheepServer::configure_and_serialize(std::vector<int> inputvec) {
+int SheepServer::configure_and_serialize(const std::vector<int>& inputvec) {
   /// Return the size of the serialized ciphertext (string itself is not much use)
   size_t ct_buffer_size = 1;
   SharedBuffer<int> serialized_ct_shared(ct_buffer_size);
@@ -303,9 +303,8 @@ int SheepServer::configure_and_serialize(std::vector<int> inputvec) {
 
       auto context = make_context<PlaintextT>(m_job_config.context);
       /// set parameters for this context
-      for (auto map_iter = m_job_config.parameters.begin();
-	   map_iter != m_job_config.parameters.end(); ++map_iter) {
-	context->set_parameter(map_iter->first, map_iter->second);
+      for (auto & parameter : m_job_config.parameters) {
+	context->set_parameter(parameter.first, parameter.second);
 
       }
       /// apply the new parameters
@@ -326,7 +325,7 @@ int SheepServer::configure_and_serialize(std::vector<int> inputvec) {
 
 
 template <typename PlaintextT>
-void SheepServer::configure_and_run(http_request message) {
+void SheepServer::configure_and_run(const http_request& message) {
   if (!m_job_config.isConfigured())
     throw std::runtime_error("Job incompletely configured");
 
@@ -353,9 +352,8 @@ void SheepServer::configure_and_run(http_request message) {
 	/// we can now assume we have values for context, inputs, circuit, etc
 	auto context = make_context<PlaintextT>(m_job_config.context);
 	/// set parameters for this context
-	for (auto map_iter = m_job_config.parameters.begin();
-	     map_iter != m_job_config.parameters.end(); ++map_iter) {
-	  context->set_parameter(map_iter->first, map_iter->second);
+	for (auto & parameter : m_job_config.parameters) {
+	  context->set_parameter(parameter.first, parameter.second);
 	}
 	/// apply the new parameters
 	context->configure();
@@ -482,7 +480,7 @@ void SheepServer::configure_and_run(http_request message) {
   }
 }
 
-void SheepServer::handle_get(http_request message) {
+void SheepServer::handle_get(const http_request& message) {
   auto path = message.relative_uri().path();
   if (path == "context/")
     return handle_get_context(message);
@@ -510,7 +508,7 @@ void SheepServer::handle_get(http_request message) {
     message.reply(status_codes::InternalError, ("Unrecognized request"));
 };
 
-void SheepServer::handle_post(http_request message) {
+void SheepServer::handle_post(const http_request& message) {
   auto path = message.relative_uri().path();
   if (path == "context/")
     return handle_post_context(message);
@@ -536,7 +534,7 @@ void SheepServer::handle_post(http_request message) {
     message.reply(status_codes::InternalError, ("Unrecognized request"));
 };
 
-void SheepServer::handle_put(http_request message) {
+void SheepServer::handle_put(const http_request& message) {
   auto path = message.relative_uri().path();
   if (path == "parameters/")
     return handle_put_parameters(message);
@@ -547,7 +545,7 @@ void SheepServer::handle_put(http_request message) {
   message.reply(status_codes::OK);
 };
 
-void SheepServer::handle_post_run(http_request message) {
+void SheepServer::handle_post_run(const http_request& message) {
   /// get a context, configure it with the stored
   /// parameters, and run it.
 
@@ -573,7 +571,7 @@ void SheepServer::handle_post_run(http_request message) {
     message.reply(status_codes::InternalError, ("Unknown input type"));
 }
 
-void SheepServer::handle_post_circuit(http_request message) {
+void SheepServer::handle_post_circuit(const http_request& message) {
   ///
   message.extract_json().then([=](pplx::task<json::value> jvalue) {
     try {
@@ -602,7 +600,7 @@ void SheepServer::handle_post_circuit(http_request message) {
 
 }
 
-void SheepServer::handle_post_circuitfile(http_request message) {
+void SheepServer::handle_post_circuitfile(const http_request& message) {
   /// set circuit filename to use
   bool found_circuit = false;
   message.extract_json().then([=](pplx::task<json::value> jvalue) {
@@ -626,7 +624,7 @@ void SheepServer::handle_post_circuitfile(http_request message) {
   message.reply(status_codes::OK);
 }
 
-void SheepServer::handle_get_inputs(http_request message) {
+void SheepServer::handle_get_inputs(const http_request& message) {
 
   json::value result = json::value::object();
   json::value inputs = json::value::array();
@@ -642,7 +640,7 @@ void SheepServer::handle_get_inputs(http_request message) {
   message.reply(status_codes::OK, result);
 }
 
-void SheepServer::handle_get_const_inputs(http_request message) {
+void SheepServer::handle_get_const_inputs(const http_request& message) {
   /// check again that the circuit exists.
   //  if (! circuit_file.good())
   //   message.reply(status_codes::InternalError,("Circuit file not found"));
@@ -660,7 +658,7 @@ void SheepServer::handle_get_const_inputs(http_request message) {
   message.reply(status_codes::OK, result);
 }
 
-void SheepServer::handle_post_inputs(http_request message) {
+void SheepServer::handle_post_inputs(const http_request& message) {
   message.extract_json().then([=](pplx::task<json::value> jvalue) {
     try {
 
@@ -682,12 +680,12 @@ void SheepServer::handle_post_inputs(http_request message) {
   message.reply(status_codes::OK);
 }
 
-void SheepServer::handle_post_const_inputs(http_request message) {
-  message.extract_json().then([=](pplx::task<json::value> jvalue) {
+void SheepServer::handle_post_const_inputs(const http_request& message) {
+  message.extract_json().then([=](const pplx::task<json::value>& jvalue) {
     try {
       json::value input_dict = jvalue.get();
 
-      for (auto input_name : m_job_config.const_input_names) {
+      for (const auto& input_name : m_job_config.const_input_names) {
         int input_val = input_dict[input_name].as_integer();
 	m_job_config.const_input_vals[input_name] = input_val;
       }
@@ -700,14 +698,14 @@ void SheepServer::handle_post_const_inputs(http_request message) {
 }
 
 
-void SheepServer::handle_post_serialized_ciphertext(http_request message) {
+void SheepServer::handle_post_serialized_ciphertext(const http_request& message) {
 
-  message.extract_json().then([=](pplx::task<json::value> jvalue) {
+  message.extract_json().then([=](const pplx::task<json::value>& jvalue) {
       try {
 	json::value input_dict = jvalue.get();
 	auto input_vals = input_dict["inputs"].as_array();
 	std::vector<int> plaintext_inputs;
-	for (auto input_val : input_vals) {
+	for (const auto& input_val : input_vals) {
 	  plaintext_inputs.push_back(input_val.as_integer());
 	}
 	int sct;
@@ -748,7 +746,7 @@ void SheepServer::handle_post_serialized_ciphertext(http_request message) {
 }
 
 
-void SheepServer::handle_get_eval_strategy(http_request message) {
+void SheepServer::handle_get_eval_strategy(const http_request& message) {
   /// get the evaluation strategy
   json::value result = json::value::object();
   if (m_job_config.eval_strategy == EvaluationStrategy::parallel) {
@@ -760,14 +758,13 @@ void SheepServer::handle_get_eval_strategy(http_request message) {
 }
 
 
-void SheepServer::handle_get_context(http_request message) {
+void SheepServer::handle_get_context(const http_request& message) {
   /// list of available contexts?
   json::value result = json::value::object();
   json::value context_list = json::value::array();
   int index = 0;
-  for (auto contextIter = m_available_contexts.begin();
-       contextIter != m_available_contexts.end(); ++contextIter) {
-    context_list[index] = json::value::string(*contextIter);
+  for (auto & m_available_context : m_available_contexts) {
+    context_list[index] = json::value::string(m_available_context);
     index++;
   }
   result["contexts"] = context_list;
@@ -775,7 +772,7 @@ void SheepServer::handle_get_context(http_request message) {
   message.reply(status_codes::OK, result);
 }
 
-void SheepServer::handle_get_input_type(http_request message) {
+void SheepServer::handle_get_input_type(const http_request& message) {
   /// list of available contexts?
   json::value result = json::value::object();
   json::value type_list = json::value::array();
@@ -789,7 +786,7 @@ void SheepServer::handle_get_input_type(http_request message) {
   message.reply(status_codes::OK, result);
 }
 
-void SheepServer::handle_post_context(http_request message) {
+void SheepServer::handle_post_context(const http_request& message) {
   /// set which context to use.  If it has changed, reset the list of
   /// parameters.
   message.extract_json().then([=](pplx::task<json::value> jvalue) {
@@ -923,14 +920,14 @@ void SheepServer::handle_get_slots(http_request message) {
   message.reply(status_codes::OK, result);
 }
 
-void SheepServer::handle_get_config(http_request message) {
+void SheepServer::handle_get_config(const http_request& message) {
   /// if we haven't already got the parameters, do this now.
   if (m_job_config.parameters.size() == 0) get_parameters();
   json::value result = m_job_config.as_json();
   message.reply(status_codes::OK, result);
 }
 
-void SheepServer::handle_get_circuit(http_request message) {
+void SheepServer::handle_get_circuit(const http_request& message) {
   /// if we haven't already got the parameters, do this now.
   if (m_job_config.circuit.get_inputs().size() <= 0) {
     message.reply(

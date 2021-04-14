@@ -18,16 +18,18 @@ RUN apt-get install -y libfftw3-dev
 ####### install intel-tbb for parallelisation
 RUN apt-get -y install libtbb-dev
 
-###### install PALISADE
-RUN apt-get -y install lzip
-RUN apt-get -y install flex
-RUN apt-get -y install bison
-RUN git clone https://gitlab.com/palisade/palisade-release.git PALISADE;
-RUN cd PALISADE; git reset --hard v1.5.0
-RUN cd PALISADE && ./configure.sh
-# Monkey patch to fix 'error: moving a local object in a return statement prevents copy elision' in the source code
-RUN cd PALISADE && find Makefile* \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i 's/-Werror/-Werror -Wno-pessimizing-move/g'
-RUN cd PALISADE && echo "@@@@@" && g++ --version && CC=gcc-9 CXX=g++-9 make -j4
+### Create base dir for FHE-libraries
+RUN mkdir -p SHEEP/backend/lib/
+
+###### get autoconf (needed for PALISADE)
+RUN apt install -y autoconf
+
+###### build PALISADE
+RUN cd SHEEP/backend/lib; git clone https://gitlab.com/palisade/palisade-release.git
+RUN cd SHEEP/backend/lib/palisade-release/; git submodule sync --recursive; git submodule update --init  --recursive
+RUN mkdir SHEEP/backend/lib/palisade-release/build
+RUN cd SHEEP/backend/lib/palisade-release/build; export CC=gcc-9; export CXX=g++-9; cmake ..
+RUN cd SHEEP/backend/lib/palisade-release/build; make -j2; make install;
 
 # ###### get gmp (needed for HElib)
 RUN apt -y install m4
@@ -51,17 +53,15 @@ RUN cd casablanca/Release; mkdir build.debug; cd build.debug; \
     export CC=gcc-9; export CXX=g++-9; cmake .. -DCMAKE_BUILD_TYPE=Debug; make install -j4
 
 ###### build SEAL
-RUN version=3.6.3; \
-wget -qO- https://github.com/microsoft/SEAL/archive/refs/tags/v$version.tar.gz | tar xvz; \
-cd SEAL-$version; export CC=gcc-9; export CXX=g++-9 ; cmake -S . -B build; cmake --build build
-
+RUN cd SHEEP/backend/lib; version=3.6.3; \
+    wget -qO- https://github.com/microsoft/SEAL/archive/refs/tags/v$version.tar.gz | tar xvz; \
+    cd SEAL-$version; export CC=gcc-9; export CXX=g++-9 ; \
+    cmake -S . -B build; cmake --build build; cmake --install build
 
 ###### get and build libpaillier
 RUN wget http://hms.isi.jhu.edu/acsc/libpaillier/libpaillier-0.8.tar.gz
 RUN tar -xvzf libpaillier-0.8.tar.gz
 RUN cd libpaillier-0.8 ; ./configure; make -j4; make install
-
-RUN mkdir -p SHEEP/backend/lib/
 
 ###### build TFHE
 RUN cd SHEEP/backend/lib; git clone --recurse-submodules https://github.com/tfhe/tfhe.git

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <sstream>
 #include <string>
@@ -33,12 +34,10 @@ void on_initialize(const string_t& address) {
   uri.append_path("SheepServer/");
 
   auto addr = uri.to_uri().to_string();
-  g_http = std::unique_ptr<SheepServer>(new SheepServer(addr));
+  g_http = std::make_unique<SheepServer>(addr);
   g_http->open().wait();
 
   cout << utility::string_t("Listening for requests at: ") << addr << std::endl;
-
-  return;
 }
 
 void on_shutdown() {

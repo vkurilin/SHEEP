@@ -14,7 +14,6 @@
 #include <vector>
 
 #ifdef HAVE_TBB
-#include "tbb/atomic.h"
 #include "tbb/concurrent_unordered_map.h"
 #include "tbb/flow_graph.h"
 #endif  // HAVE_TBB
@@ -455,14 +454,14 @@ class Context : public BaseContext<PlaintextT> {
     // exactly once.
     std::string timeout_gate_name;
     microsecond timeout_wall_time;
-    for (const Assignment assn : circ.get_assignments()) {
+    for (const Assignment& assn : circ.get_assignments()) {
       auto current_eval = [=, &eval_map, &circuit_timed_out, &timeout_gate_name,
                            &timeout_wall_time,
                            &start_time](const continue_msg&) {
         std::vector<Ciphertext> inputs;
         std::vector<long> const_inputs;
 
-        for (Wire w : assn.get_inputs()) {
+        for (const Wire& w : assn.get_inputs()) {
           typename decltype(eval_map)::iterator it;
           if ((it = eval_map.find(w.get_name())) != eval_map.end()) {
             inputs.push_back(it->second);

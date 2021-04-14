@@ -63,30 +63,31 @@ class ContextSealCKKS<double> : public Context<double, seal::Ciphertext> {
     std::stringstream x;
     x << "1x^" << m_N << " + 1";
     this->m_poly_modulus = x.str();
-    seal::EncryptionParameters parms(seal::scheme_type::CKKS);
+    seal::EncryptionParameters parms(seal::scheme_type::ckks);
     parms.set_poly_modulus_degree(m_N);
     this->m_scale = pow(2.0, m_scale_bits);
 
     parms.set_coeff_modulus(seal::CoeffModulus::Create(m_N, { 40, 40, 40, 40, 40 }));
 
-    m_context = seal::SEALContext::Create(parms);
+    m_context = make_shared<seal::SEALContext>(parms);
 
-    seal::KeyGenerator keygen(m_context);
-    m_public_key = keygen.public_key();
+    seal::KeyGenerator keygen(*m_context);
     m_secret_key = keygen.secret_key();
-    m_galois_keys = keygen.galois_keys();
-    m_relin_keys = keygen.relin_keys();
 
-    m_encoder = new seal::CKKSEncoder(m_context);
+    keygen.create_public_key(m_public_key);
+    keygen.create_galois_keys(m_galois_keys);
+    keygen.create_relin_keys(m_relin_keys);
+
+    m_encoder = new seal::CKKSEncoder(*m_context);
 
 
     //// sizes of objects, in bytes
     this->m_public_key_size = sizeof(m_public_key);
     this->m_private_key_size = sizeof(m_secret_key);
 
-    m_encryptor = new seal::Encryptor(m_context, m_public_key);
-    m_evaluator = new seal::Evaluator(m_context);
-    m_decryptor = new seal::Decryptor(m_context, m_secret_key);
+    m_encryptor = new seal::Encryptor(*m_context, m_public_key);
+    m_evaluator = new seal::Evaluator(*m_context);
+    m_decryptor = new seal::Decryptor(*m_context, m_secret_key);
 
     this->m_nslots = m_encoder->slot_count();
   }
@@ -221,30 +222,31 @@ class ContextSealCKKS<std::complex<double> >: public Context<std::complex<double
     std::stringstream x;
     x << "1x^" << m_N << " + 1";
     this->m_poly_modulus = x.str();
-    seal::EncryptionParameters parms(seal::scheme_type::CKKS);
+    seal::EncryptionParameters parms(seal::scheme_type::ckks);
     parms.set_poly_modulus_degree(m_N);
     this->m_scale = pow(2.0, m_scale_bits);
 
     parms.set_coeff_modulus(seal::CoeffModulus::Create(m_N, { 40, 40, 40, 40, 40 }));
 
-    m_context = seal::SEALContext::Create(parms);
+    m_context = make_shared<seal::SEALContext>(parms);
 
-    seal::KeyGenerator keygen(m_context);
-    m_public_key = keygen.public_key();
+    seal::KeyGenerator keygen(*m_context);
     m_secret_key = keygen.secret_key();
-    m_galois_keys = keygen.galois_keys();
-    m_relin_keys = keygen.relin_keys();
 
-    m_encoder = new seal::CKKSEncoder(m_context);
+    keygen.create_public_key(m_public_key);
+    keygen.create_galois_keys(m_galois_keys);
+    keygen.create_relin_keys(m_relin_keys);
+
+    m_encoder = new seal::CKKSEncoder(*m_context);
 
 
     //// sizes of objects, in bytes
     this->m_public_key_size = sizeof(m_public_key);
     this->m_private_key_size = sizeof(m_secret_key);
 
-    m_encryptor = new seal::Encryptor(m_context, m_public_key);
-    m_evaluator = new seal::Evaluator(m_context);
-    m_decryptor = new seal::Decryptor(m_context, m_secret_key);
+    m_encryptor = new seal::Encryptor(*m_context, m_public_key);
+    m_evaluator = new seal::Evaluator(*m_context);
+    m_decryptor = new seal::Decryptor(*m_context, m_secret_key);
 
     this->m_nslots = m_encoder->slot_count();
   }
@@ -316,7 +318,7 @@ class ContextSealCKKS<std::complex<double> >: public Context<std::complex<double
   }
 
 
-  Ciphertext Rotate(Ciphertext a, long n) {
+  Ciphertext Rotate(Ciphertext a, long n) override {
     Ciphertext b, c;
     long N = this->get_num_slots();
     if (n > 0) n = n - this->m_ninputs;
@@ -327,13 +329,13 @@ class ContextSealCKKS<std::complex<double> >: public Context<std::complex<double
   }
 
   // destructor
-  virtual ~ContextSealCKKS() {
+  ~ContextSealCKKS() override {
     /// delete everything we new-ed in the constructor
     // if (m_context != NULL) delete m_context;
-    if (m_encoder != NULL) delete m_encoder;
-    if (m_encryptor != NULL) delete m_encryptor;
-    if (m_evaluator != NULL) delete m_evaluator;
-    if (m_decryptor != NULL) delete m_decryptor;
+    delete m_encoder;
+    delete m_encryptor;
+    delete m_evaluator;
+    delete m_decryptor;
   };
 
  protected:
