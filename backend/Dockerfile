@@ -18,7 +18,7 @@ ADD tests SHEEP/backend/tests
 
 RUN rm -fr SHEEP/backend/build; mkdir SHEEP/backend/build
 
-RUN cd SHEEP/backend/build; export CC=gcc-9; export CXX=g++-9; \
+RUN cd SHEEP/backend/build; export CC=gcc; export CXX=g++; \
     export HElib_ROOT=/SHEEP/backend/lib/HElib/src; \
     export SEAL_INCLUDE_DIR=/usr/local/include/SEAL-3.6/; \
     cmake ..
@@ -31,25 +31,30 @@ CMD ["bin/run-sheep-server"]
 
 FROM sheep as sheep-remote-cpp
 
-RUN apt-get update \
-  && apt-get install -y ssh \
-      gdb \
-      clang \
-      rsync \
-      tar \
-      python \
-  && apt-get clean
+RUN dnf install -y \
+    openssh-server \
+    passwd \
+    gdb \
+    clang \
+    libasan \
+    libtsan \
+    rsync \
+    tar \
+    python \
+    glibc-static \
+    libstdc++-static \
+    && dnf clean all
+
+RUN ssh-keygen -A
 
 RUN ( \
     echo 'LogLevel DEBUG2'; \
     echo 'PermitRootLogin yes'; \
     echo 'PasswordAuthentication yes'; \
-    echo 'Subsystem sftp /usr/lib/openssh/sftp-server'; \
-  ) > /etc/ssh/sshd_config_test_clion \
-  && mkdir /run/sshd
+    echo 'Subsystem sftp /usr/libexec/openssh/sftp-server'; \
+  ) > /etc/ssh/sshd_config_test_clion
 
 RUN useradd -m user \
   && yes password | passwd user
 
-RUN usermod -s /bin/bash user
 CMD ["/usr/sbin/sshd", "-D", "-e", "-f", "/etc/ssh/sshd_config_test_clion"]

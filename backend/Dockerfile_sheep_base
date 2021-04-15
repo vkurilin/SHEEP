@@ -1,67 +1,52 @@
-FROM ubuntu:20.04 as sheep_base
-
-RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get -y install tzdata
+FROM fedora:33 as sheep_base
 
 ### get wget git etc
 
-RUN apt-get update; apt-get -y install \
+RUN dnf -y groupinstall "Development Tools" "Development Libraries";
+RUN dnf -y install \
     git \
     wget \
-    cmake \
-    gcc-9 \
-    g++-9 \
-    build-essential
+    cmake;
 
 ###### get fftw3 (needed for TFHE)
-RUN apt-get install -y libfftw3-dev
+RUN dnf install -y fftw-devel
 
 ####### install intel-tbb for parallelisation
-RUN apt-get -y install libtbb-dev
+RUN dnf install -y tbb-devel
 
 ### Create base dir for FHE-libraries
 RUN mkdir -p SHEEP/backend/lib/
 
 ###### get autoconf (needed for PALISADE)
-RUN apt install -y autoconf
+RUN dnf install -y autoconf
 
 ###### build PALISADE
 RUN cd SHEEP/backend/lib; git clone https://gitlab.com/palisade/palisade-release.git
 RUN cd SHEEP/backend/lib/palisade-release/; git submodule sync --recursive; git submodule update --init  --recursive
 RUN mkdir SHEEP/backend/lib/palisade-release/build
-RUN cd SHEEP/backend/lib/palisade-release/build; export CC=gcc-9; export CXX=g++-9; cmake ..
+RUN cd SHEEP/backend/lib/palisade-release/build; export CC=gcc; export CXX=g++; cmake ..
 RUN cd SHEEP/backend/lib/palisade-release/build; make -j2; make install;
 
 # ###### get gmp (needed for HElib)
-RUN apt -y install m4
+RUN dnf -y install m4
 RUN version=6.2.0; wget https://gmplib.org/download/gmp/gmp-$version.tar.xz; \
     tar -xvf gmp-$version.tar.xz; \
-    cd gmp-$version; export CC=gcc-9; export CXX=g++-9; ./configure; make -j4; make install
+    cd gmp-$version; export CC=gcc; export CXX=g++; ./configure; make -j4; make install
 
 ###### get ntl (needed for HElib)
 RUN version=10.5.0; wget https://libntl.org/ntl-$version.tar.gz; \
     tar -xvzf ntl-$version.tar.gz; \
-    cd ntl-$version/src; export CC=gcc-9; export CXX=g++-9; \
+    cd ntl-$version/src; export CC=gcc; export CXX=g++; \
     ./configure NTL_GMP_LIP=on NTL_EXCEPTIONS=on; make -j4; make install
 
 ###### get cpprestsdk (for the REST API)
-RUN apt-get update
-RUN apt-get -y install libssl-dev
-RUN apt-get -y install libboost-all-dev
-RUN apt-get update
-RUN git clone --recurse-submodules  https://github.com/Microsoft/cpprestsdk.git casablanca
-RUN cd casablanca/Release; mkdir build.debug; cd build.debug; \
-    export CC=gcc-9; export CXX=g++-9; cmake .. -DCMAKE_BUILD_TYPE=Debug; make install -j4
+RUN dnf -y install cpprest-devel
 
 ###### build SEAL
 RUN cd SHEEP/backend/lib; version=3.6.3; \
     wget -qO- https://github.com/microsoft/SEAL/archive/refs/tags/v$version.tar.gz | tar xvz; \
-    cd SEAL-$version; export CC=gcc-9; export CXX=g++-9 ; \
+    cd SEAL-$version; export CC=gcc; export CXX=g++ ; \
     cmake -S . -B build; cmake --build build; cmake --install build
-
-###### get and build libpaillier
-RUN wget http://hms.isi.jhu.edu/acsc/libpaillier/libpaillier-0.8.tar.gz
-RUN tar -xvzf libpaillier-0.8.tar.gz
-RUN cd libpaillier-0.8 ; ./configure; make -j4; make install
 
 ###### build TFHE
 RUN cd SHEEP/backend/lib; git clone --recurse-submodules https://github.com/tfhe/tfhe.git
@@ -70,7 +55,7 @@ RUN cd SHEEP/backend/lib/tfhe; git submodule update --init
 
 RUN rm -fr SHEEP/backend/lib/tfhe/build
 RUN mkdir -p SHEEP/backend/lib/tfhe/build
-RUN cd SHEEP/backend/lib/tfhe/build; export CC=gcc-9; export CXX=g++-9; cmake ../src -DENABLE_TESTS=on -DENABLE_FFTW=on -DCMAKE_BUILD_TYPE=optim -DENABLE_NAYUKI_PORTABLE=off -DENABLE_SPQLIOS_AVX=off -DENABLE_SPQLIOS_FMA=off -DENABLE_NAYUKI_AVX=off
+RUN cd SHEEP/backend/lib/tfhe/build; export CC=gcc; export CXX=g++; cmake ../src -DENABLE_TESTS=on -DENABLE_FFTW=on -DCMAKE_BUILD_TYPE=optim -DENABLE_NAYUKI_PORTABLE=off -DENABLE_SPQLIOS_AVX=off -DENABLE_SPQLIOS_FMA=off -DENABLE_NAYUKI_AVX=off
 RUN cd SHEEP/backend/lib/tfhe/build; make -j4; make install;
 
 ###### build HElib
@@ -78,4 +63,4 @@ RUN cd SHEEP/backend/lib; git clone --recurse-submodules https://github.com/shai
 RUN cd SHEEP/backend/lib/HElib; git reset --hard 9c50908a3538f5df77df523e525e1f9841f22eb2
 RUN cd SHEEP/backend/lib/HElib; git submodule update --init
 
-RUN cd SHEEP/backend/lib/HElib/src ; export CC=gcc-9; export CXX=g++-9; make clean; make -j4;
+RUN cd SHEEP/backend/lib/HElib/src ; export CC=gcc; export CXX=g++; make clean; make -j4;

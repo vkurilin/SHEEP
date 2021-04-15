@@ -63,6 +63,7 @@ struct SheepJobConfig {
   json::value as_json() {
     json::value config = json::value::object();
     json::value j_context = json::value::string(context);
+    config["kek"] = json::value::string("pek");
     config["context"] = j_context;
     json::value j_circuit_file = json::value::string(circuit_filename);
     config["circuit_filename"] = j_circuit_file;
@@ -98,33 +99,31 @@ struct SheepJobResult {
     json::value result = json::value::object();
 
     json::value j_outputs = json::value::object();
-    for (auto map_iter = outputs.begin(); map_iter != outputs.end();
-         ++map_iter) {
+    for (auto & output : outputs) {
       json::value outputs = json::value::array();
 
       int idx = 0, out_val_cnt = 0;
       std::string result = "";
-      for (auto out_val : map_iter->second) {
+      for (auto out_val : output.second) {
         if (out_val_cnt > 0) {
           result = result + ",";
         }
 
-        for (int i = 0; i < out_val.length(); i++) {
-          result = result + out_val[i];
+        for (char i : out_val) {
+          result = result + i;
         }
 
         out_val_cnt += 1;
       }
       outputs[idx] = json::value::string(result);
 
-      j_outputs[map_iter->first] = outputs;
+      j_outputs[output.first] = outputs;
     }
     result["outputs"] = j_outputs;
 
     json::value j_timings = json::value::object();
-    for (auto map_iter = timings.begin(); map_iter != timings.end();
-         ++map_iter) {
-      j_timings[map_iter->first] = json::value::string(map_iter->second);
+    for (auto & timing : timings) {
+      j_timings[timing.first] = json::value::string(timing.second);
     }
     result["timings"] = j_timings;
 
@@ -158,7 +157,7 @@ class SheepServer {
   std::string convert_to_string(PlaintextT t);
 
   template <typename PlaintextT>
-  void configure_and_run(const http_request& message);
+  void configure_and_run(const http_request message);
 
   template <typename PlaintextT>
   int configure_and_serialize(const std::vector<int>& pt);
@@ -175,37 +174,37 @@ class SheepServer {
 
  private:
   /// generic methods - will then dispatch to specific ones based on URL
-  void handle_get(const http_request& message);
-  void handle_put(const http_request& message);
-  void handle_post(const http_request& message);
+  void handle_get(const http_request message);
+  void handle_put(const http_request message);
+  void handle_post(const http_request message);
   /// actual endpoints
-  void handle_get_context(const http_request& message);
-  void handle_get_circuit(const http_request& message);
-  void handle_get_input_type(const http_request& message);
-  void handle_get_inputs(const http_request& message);
-  void handle_get_const_inputs(const http_request& message);
-  void handle_get_parameters(http_request message);
-  void handle_get_slots(http_request message);
-  void handle_get_eval_strategy(const http_request& message);
-  void handle_get_config(const http_request& message);
-  void handle_get_results(http_request message);
-  void handle_get_job(http_request message);
+  void handle_get_context(const http_request message);
+  void handle_get_circuit(const http_request message);
+  void handle_get_input_type(const http_request message);
+  void handle_get_inputs(const http_request message);
+  void handle_get_const_inputs(const http_request message);
+  void handle_get_parameters(const http_request message);
+  void handle_get_slots(const http_request message);
+  void handle_get_eval_strategy(const http_request message);
+  void handle_get_config(const http_request message);
+  void handle_get_results(const http_request message);
+  void handle_get_job(const http_request message);
 
-  void handle_post_inputs(const http_request& message);
-  void handle_post_const_inputs(const http_request& message);
-  void handle_post_serialized_ciphertext(const http_request& message);
+  void handle_post_inputs(const http_request message);
+  void handle_post_const_inputs(const http_request message);
+  void handle_post_serialized_ciphertext(const http_request message);
 
-  void handle_post_input_type(http_request message);
-  void handle_post_circuit(const http_request& message);
-  void handle_post_circuitfile(const http_request& message);
-  void handle_post_context(const http_request& message);
-  void handle_post_job(http_request message);
-  void handle_post_configure(http_request message);
-  void handle_post_run(const http_request& message);
+  void handle_post_input_type(const http_request message);
+  void handle_post_circuit(const http_request message);
+  void handle_post_circuitfile(const http_request message);
+  void handle_post_context(const http_request message);
+  void handle_post_job(const http_request message);
+  void handle_post_configure(const http_request message);
+  void handle_post_run(const http_request message);
 
-  void handle_put_parameters(http_request message);
-  void handle_put_eval_strategy(http_request message);
-  void handle_put_timeout(http_request message);
+  void handle_put_parameters(const http_request message);
+  void handle_put_eval_strategy(const http_request message);
+  void handle_put_timeout(const http_request message);
 
   /// listen to http requests
   http_listener m_listener;

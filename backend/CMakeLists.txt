@@ -10,7 +10,7 @@ set(CMAKE_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/lib/HElib/src/")
 # C++ REST API for interaction with web app - also needs openSSL, Boost, Threads
 set(OPENSSL_ROOT_DIR ${OPENSSL_ROOT_DIR} /usr/local/opt/openssl)
 find_package(OpenSSL)
-set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 find_package(cpprestsdk REQUIRED)
 find_package(Boost COMPONENTS system filesystem thread date_time program_options REQUIRED)
